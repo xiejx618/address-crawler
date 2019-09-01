@@ -1,0 +1,73 @@
+= one master one slave and three sentinels
+xiejx618 <xiejx618@qq.com>
+:lang: zh_CN
+:sectnums:
+:toc:
+
+
+== master
+=== vi redis.conf
+[source,conf]
+----
+bind 192.168.1.144
+port 6379
+daemonize yes
+#Omit other
+----
+=== startup:
+`./src/redis-server redis.conf`
+
+== slave
+=== vi redis.conf
+[source,conf]
+----
+bind 192.168.1.144
+port 6380
+daemonize yes
+replicaof 192.168.1.144
+#Omit other
+----
+=== startup:
+`./src/redis-server redis.conf`
+
+== sentinel1
+=== vi sentinel.conf
+[source,conf]
+----
+port 5000
+daemonize yes
+sentinel monitor mymaster 192.168.1.144 6379 2
+sentinel down-after-milliseconds mymaster 5000
+sentinel failover-timeout mymaster 60000
+sentinel parallel-syncs mymaster 1
+----
+=== startup:
+`./src/redis-sentinel sentinel.conf`
+
+== sentinel2
+=== vi sentinel.conf
+[source,conf]
+----
+port 5001
+daemonize yes
+sentinel monitor mymaster 192.168.1.144 6379 2
+sentinel down-after-milliseconds mymaster 5000
+sentinel failover-timeout mymaster 60000
+sentinel parallel-syncs mymaster 1
+----
+=== startup:
+`./src/redis-sentinel sentinel.conf`
+
+== sentinel3
+=== vi sentinel.conf
+[source,conf]
+----
+port 5002
+daemonize yes
+sentinel monitor mymaster 192.168.1.144 6379 2
+sentinel down-after-milliseconds mymaster 5000
+sentinel failover-timeout mymaster 60000
+sentinel parallel-syncs mymaster 1
+----
+=== startup:
+`./src/redis-sentinel sentinel.conf`
