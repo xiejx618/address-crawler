@@ -12,6 +12,7 @@ xiejx618 <xiejx618@qq.com>
 bind 192.168.1.144
 port 6379
 daemonize yes
+pidfile /var/run/redis_6379.pid
 #Omit other
 ----
 === startup:
@@ -24,6 +25,7 @@ daemonize yes
 bind 192.168.1.144
 port 6380
 daemonize yes
+pidfile /var/run/redis_6380.pid
 replicaof 192.168.1.144
 #Omit other
 ----
