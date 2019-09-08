@@ -1,5 +1,11 @@
 spring:
-  redis:
-    sentinel:
-      master: mymaster
-      nodes: 192.168.1.144:5000, 192.168.1.144:5001, 192.168.1.144:5002
+  application:
+    name: merchant-web-admin
+  datasource:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+    url: jdbc:mysql://127.0.0.1:3306/test?useSSL=false&useUnicode=true&zeroDateTimeBehavior=convertToNull&autoReconnect=true&serverTimezone=GMT%2B8
+    username: root
+    password: 123456
+    hikari:
+      connection-timeout: 5000
+      maximum-pool-size: 30
