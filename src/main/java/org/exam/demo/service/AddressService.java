@@ -22,7 +22,6 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
-import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -37,11 +36,11 @@ public class AddressService extends BreadthCrawler {
     }
 
     public void start() {
-        addSeed("http://www.stats.gov.cn/tjsj/tjbz/tjyqhdmhcxhfdm/2018/");
+        addSeedAndReturn("http://www.stats.gov.cn/tjsj/tjbz/tjyqhdmhcxhfdm/2018/");
         setConf(Configuration.getDefault()
                 //默认是3秒
                 .setConnectTimeout(10000)
-                //默认是20秒
+                //默认是10秒
                 .setReadTimeout(20000)
                 //默认是1分钟，如果一个线程等了5分钟就会被杀掉,所以线程sleep时要注意下
                 .setWaitThreadEndTime(300000)
@@ -61,7 +60,7 @@ public class AddressService extends BreadthCrawler {
      *             代表以上级别才去解析
      */
     private static boolean matchVisit(String type) {
-        return Arrays.asList("province", "city", "county", "town").contains(type);
+        return true;
     }
 
     /**
@@ -70,7 +69,7 @@ public class AddressService extends BreadthCrawler {
      *             当前页级别是上面，才添加链接到后面去爬
      */
     private static boolean matchNext(String type) {
-        return Arrays.asList("province", "city", "county").contains(type);
+        return true;
     }
 
     @Override
@@ -113,26 +112,31 @@ public class AddressService extends BreadthCrawler {
             datum.type("province");
             cssSelector = ".provincetable .provincetr td";
         } else {
-            logger.error("Unsupported page:" + datum.url() + "," + datum.type());
-            throw new RuntimeException("addSeedAndReturn(\"" + datum.url() + "\").type(\"" + datum.type() + "\");");
+            //如果弹出验证码或者其它原因,就等一分钟
+            try {
+                TimeUnit.MINUTES.sleep(1);
+            } catch (InterruptedException e) {
+                logger.info("一分钟的等待被打断了");
+            }
+            throw new RuntimeException("Unsupported page!\naddSeedAndReturn(\"" + datum.url() + "\");");
         }
         if (!matchVisit(datum.type())) {
             return null;
         }
         Elements elements = page.select(cssSelector);
-        //不该出现找不到元素的页面，如果弹出验证码或者其它原因,就等一分钟.
+        //不该出现找不到元素的页面或者其它原因,就等一分钟.
         if (elements.size() == 0) {
             try {
                 TimeUnit.MINUTES.sleep(1);
             } catch (InterruptedException e) {
                 logger.info("一分钟的等待被打断了");
             }
-            throw new RuntimeException("addSeedAndReturn(\"" + datum.url() + "\").type(\"" + datum.type() + "\"); \ncode:" + datum.code() + ",size:" + elements.size());
+            throw new RuntimeException("Zero size,code:" + datum.code() + "\naddSeedAndReturn(\"" + datum.url() + "\").type(\"" + datum.type() + "\");");
         }
         return elements;
     }
 
-    private void handle(CrawlDatums next, CrawlDatum datum, Elements elements, List<Address> items) {
+    private static void handle(CrawlDatums next, CrawlDatum datum, Elements elements, List<Address> items) {
         String type = datum.type();
         switch (type) {
             case "province":
@@ -170,7 +174,7 @@ public class AddressService extends BreadthCrawler {
         }
     }
 
-    private void handleItem(CrawlDatums next, CrawlDatum datum, String id, String name, String url, List<Address> items) {
+    private static void handleItem(CrawlDatums next, CrawlDatum datum, String id, String name, String url, List<Address> items) {
         String type = datum.type();
         //写入数据
         Address address = new Address(type, id, name,
@@ -210,7 +214,7 @@ public class AddressService extends BreadthCrawler {
             jdbcOperations.batchUpdate("insert into address (type, id, name, province_id, province_name, city_id, city_name, county_id, county_name, town_id, town_name) values (?,?,?,?,?,?,?,?,?,?,?)",
                     list, list.size(), (ps, address) -> {
                         int i = 1;
-                        ps.setString(i++, address.getLvl());
+                        ps.setString(i++, address.getType());
                         ps.setString(i++, address.getId());
                         ps.setString(i++, address.getName());
                         ps.setString(i++, address.getProvinceId());
@@ -227,7 +231,7 @@ public class AddressService extends BreadthCrawler {
             try (FileOutputStream out = new FileOutputStream("err.csv", true)) {
                 StringBuilder sb = new StringBuilder();
                 for (Address a : list) {
-                    sb.append(a.getLvl())
+                    sb.append(a.getType())
                             .append(",").append(a.getId()).append(",").append(a.getName())
                             .append(",").append(a.getProvinceId()).append(",").append(a.getProvinceName())
                             .append(",").append(a.getCityId()).append(",").append(a.getCityName())

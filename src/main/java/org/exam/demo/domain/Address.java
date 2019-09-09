@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 
 public class Address implements Serializable {
-    private String lvl;
+    private String type;
     private String id;
     private String name;
     private String provinceId;
@@ -18,7 +18,7 @@ public class Address implements Serializable {
 
     public Address(String lvl, String id, String name, String provinceId, String provinceName,
                    String cityId, String cityName, String countyId, String countyName, String townId, String townName) {
-        this.lvl = lvl;
+        this.type = lvl;
         this.id = id;
         this.name = name;
         this.provinceId = provinceId;
@@ -31,12 +31,12 @@ public class Address implements Serializable {
         this.townName = townName;
     }
 
-    public String getLvl() {
-        return lvl;
+    public String getType() {
+        return type;
     }
 
-    public void setLvl(String lvl) {
-        this.lvl = lvl;
+    public void setType(String type) {
+        this.type = type;
     }
 
     public String getId() {
